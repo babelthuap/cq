@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cryptoquip</title>
+  <style>
+    body {
+      background-color: tan;
+      margin: 16px;
+    }
+
+    #restart {
+      border: 1px solid black;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #game {
+      font-family: monospace;
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .char {
+      display: inline-block;
+      margin-right: 1px;
+    }
+
+    .char [contenteditable] {
+      background-color: rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="restart">RESTART</button>
+  <div id="game"></div>
+  <script src="main.js"></script>
+</body>
+</html>

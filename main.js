@@ -62,30 +62,40 @@ function restart(text) {
     </div>`;
   }).join('');
 
-  // listen for input
+  // listen for keystrokes
   const editables = Array.from(GAME.querySelectorAll('[contenteditable]'));
-  keyListener = handleInput.bind(null, cipher, editables);
-  GAME.addEventListener('input', keyListener);
+  keyListener = handleKeydown.bind(null, cipher, editables);
+  GAME.addEventListener('keydown', keyListener);
   editables[0].focus();
 }
 
-// handle input in editable elements
-function handleInput(cipher, editables, event) {
-  console.log(event.inputType);
+// handle keystrokes in editable elements
+function handleKeydown(cipher, editables, event) {
   const el = event.srcElement;
   let i;
   if (el.isContentEditable) {
-    switch (event.inputType) {
-      case 'deleteContentBackward':
-      case 'deleteContentForward':
+    const key = event.key.toUpperCase();
+    switch (key) {
+      case 'TAB':
+      case 'ESCAPE':
+        return;
+      case 'ARROWLEFT':
+        i = editables.indexOf(el);
+        if (i > 0) {
+          editables[i - 1].focus();
+        }
+        break;
+      case 'ARROWRIGHT':
+        i = editables.indexOf(el);
+        if (i + 1 < editables.length) {
+          editables[i + 1].focus();
+        }
+        break;
+      case 'BACKSPACE':
+      case 'DELETE':
         setTextOnClass(el.className, '');
-        event.preventDefault();
-        return;
-      case 'insertFromPaste':
-        event.preventDefault();
-        return;
-      case 'insertText':
-        const key = event.data.toUpperCase();
+        break;
+      default:
         if (key in cipher) {
           setTextOnClass(el.className, key);
           i = editables.indexOf(el);
@@ -96,9 +106,8 @@ function handleInput(cipher, editables, event) {
             editables[i + increment].focus();
           }
         }
-        event.preventDefault();
-        return;
     }
+    event.preventDefault();
   }
 }
 

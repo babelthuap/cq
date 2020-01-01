@@ -1,1 +1,127 @@
-'use strict';(function(){'use strict';function a(m){for(var n=m.length-1;0<n;n-=1){var o=Math.floor((n+1)*Math.random()),p=m[o];m[o]=m[n],m[n]=p}return m}function b(){var m=a(h.split(''));return m.some(function(n,o){return n===h[o]})?b():m}function c(){var m=b();return Array.prototype.reduce.call(h,function(n,o,p){return n[o]=m[p],n},{})}function d(m,n){return Array.prototype.map.call(m,function(o){return o in n?n[o]:o}).join('')}function e(m){k&&j.removeEventListener('keydown',k),m=m.toUpperCase();var n=c(),o=d(m,n);j.innerHTML=o.split('').map(function(q){var r=' '===q?'&nbsp;':q;return'<div class="char">\n      <div>'+r+'</div>\n      <div '+(q in n?'contenteditable class="'+q+'"':'')+'>\n        '+(q in n?'':r)+'\n      </div>\n    </div>'}).join('');var p=Array.from(j.querySelectorAll('[contenteditable]'));k=f.bind(null,n,p),j.addEventListener('keydown',k),p[0].focus()}function f(m,n,o){var p=o.srcElement,q;if(p.isContentEditable){var r=o.key.toUpperCase();switch(r){case'TAB':case'ESCAPE':return;case'ARROWLEFT':q=n.indexOf(p),0<q&&n[q-1].focus();break;case'ARROWRIGHT':q=n.indexOf(p),q+1<n.length&&n[q+1].focus();break;case'BACKSPACE':case'DELETE':g(p.className,'');break;default:if(r in m){g(p.className,r),q=n.indexOf(p);var s=1+n.slice(q+1).findIndex(function(t){return t.className!==p.className});0<s&&n[q+s].focus()}}o.preventDefault()}}function g(m,n){j.querySelectorAll('.'+m).forEach(function(o){o.innerText=n})}var h='ABCDEFGHIJKLMNOPQRSTUVWXYZ',j=document.getElementById('game'),k=null,l=['A word of kindness is seldom spoken in vain, while witty sayings are as easily lost as the pearls slipping from a broken string.'];document.getElementById('restart').addEventListener('click',function(){e(l[0])}),e(l[0])})();
+(() => {
+'use strict';
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const GAME = document.getElementById('game');
+
+let keyListener = null;
+
+// https://www.rosettacode.org/wiki/Knuth_shuffle#JavaScript
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    let rand = Math.floor((i + 1) * Math.random());
+    let temp = arr[rand];
+    arr[rand] = arr[i];
+    arr[i] = temp;
+  }
+  return arr;
+}
+
+// ensures there are no fixed points
+function shuffleAlphabet() {
+  const shuffled = shuffle(ALPHABET.split(''));
+  return shuffled.some((letter, i) => letter === ALPHABET[i]) ?
+      shuffleAlphabet() :
+      shuffled;
+}
+
+// "cipher" == bijective map acting on the alphabet
+function generateCipher() {
+  const randAlphabet = shuffleAlphabet();
+  return Array.prototype.reduce.call(ALPHABET, (cipher, letter, i) => {
+    cipher[letter] = randAlphabet[i];
+    return cipher;
+  }, {});
+}
+
+// used to encrypt/decrypt
+function applyCipher(text, cipher) {
+  return Array.prototype.map.call(text, char => {
+    return char in cipher ? cipher[char] : char;
+  }).join('');
+}
+
+function restart(text) {
+  if (keyListener) {
+    GAME.removeEventListener('keydown', keyListener);
+  }
+
+  // generate encrypted version
+  text = text.toUpperCase();
+  const cipher = generateCipher();
+  const encrypted = applyCipher(text, cipher);
+
+  // display game
+  GAME.innerHTML = encrypted.split('').map(char => {
+    const glyph = char === ' ' ? '&nbsp;' : char;
+    return `<div class="char">
+      <div>${glyph}</div>
+      <div ${char in cipher ? `contenteditable class="${char}"` : ''}>
+        ${char in cipher ? '' : glyph}
+      </div>
+    </div>`;
+  }).join('');
+
+  // listen for keystrokes
+  const editables = Array.from(GAME.querySelectorAll('[contenteditable]'));
+  keyListener = handleKeypress.bind(null, cipher, editables);
+  GAME.addEventListener('keypress', keyListener);
+  editables[0].focus();
+}
+
+// handle keystrokes in editable elements
+function handleKeypress(cipher, editables, event) {
+  const el = event.srcElement;
+  let i;
+  if (el.isContentEditable) {
+    const key = event.key.toUpperCase();
+    switch (key) {
+      case 'TAB':
+      case 'ESCAPE':
+        return;
+      case 'ARROWLEFT':
+        i = editables.indexOf(el);
+        if (i > 0) {
+          editables[i - 1].focus();
+        }
+        break;
+      case 'ARROWRIGHT':
+        i = editables.indexOf(el);
+        if (i + 1 < editables.length) {
+          editables[i + 1].focus();
+        }
+        break;
+      case 'BACKSPACE':
+      case 'DELETE':
+        setTextOnClass(el.className, '');
+        break;
+      default:
+        if (key in cipher) {
+          setTextOnClass(el.className, key);
+          i = editables.indexOf(el);
+          const increment = 1 + editables.slice(i + 1).findIndex(editable => {
+            return editable.className !== el.className;
+          });
+          if (increment > 0) {
+            editables[i + increment].focus();
+          }
+        }
+    }
+    event.preventDefault();
+  }
+}
+
+function setTextOnClass(className, text) {
+  GAME.querySelectorAll('.' + className).forEach(el => {
+    el.innerText = text;
+  });
+}
+
+const MESSAGES = [
+  'A word of kindness is seldom spoken in vain, while witty sayings are as easily lost as the pearls slipping from a broken string.',
+];
+document.getElementById('restart').addEventListener('click', () => {
+  restart(MESSAGES[0]);
+});
+restart(MESSAGES[0]);
+})();
